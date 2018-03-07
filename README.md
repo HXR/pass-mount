@@ -3,10 +3,6 @@
 A [pass](https://www.passwordstore.org/) extension for mounting encrypted
 filesystems.
 
-/WARNING/: Under active development
-/WARNING/: Configuration format unstable and upgrade may require manual edit
-/WARNING/: Cryfs is unstable - backup your data
-
 ## Usage
 
 ```
@@ -28,13 +24,18 @@ Usage:
 More information may be found in the pass-mount(1) man page.
 ```
 
+## :rotating_light: WARNING :rotating_light:  
+Under active development  
+Configuration format unstable and upgrade may require manual edits  
+Cryfs is unstable - backup your data  
+
 ## NEWS
 0.0.1
-  Initial release! :cool:
+  Initial release! :penguin:
 
 ## KNOWN BUGS
 - Some versions of cryfs block if /dev/random runs out of entropy
-- Cryfs is not a journaling filesystem (#209)[https://github.com/cryfs/cryfs/issues/209]
+- [Cryfs is not a journaling filesystem](https://github.com/cryfs/cryfs/issues/209)
 
 ## TODO
 - [ ] support additional encrypted filesystems
@@ -74,7 +75,7 @@ sudo make install
   https://www.passwordstore.org/
 
 ## License
-Based in part on (pass-otp)[https://github.com/tadfisher/pass-otp/] by Tad Fisher
+Based in part on [pass-otp](https://github.com/tadfisher/pass-otp/) by Tad Fisher
 
 ```
 Copyright (C) 2018 HXR LLC
