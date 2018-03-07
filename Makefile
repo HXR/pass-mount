@@ -31,6 +31,15 @@ lint:
 
 doc: pass-$(PROG).1
 
+review-markdown: SHELL := /bin/bash
+review-markdown: grip_PID := $(shell coproc grip { grip; } 2>&1 && echo $$grip_PID)
+review-markdown: CHANGELOG.md README.md
+	@sleep 1
+	@xdg-open http://localhost:6419/CHANGELOG.md
+	@xdg-open http://localhost:6419/README.md
+	@read -p "Press <enter> when finished review"
+	@pkill -TERM -P $(grip_PID)
+
 pass-$(PROG).1: pass-$(PROG).1.rst
 	@echo "Building pass-$(PROG) documentation"
 	@rst2man < pass-$(PROG).1.rst > pass-$(PROG).1
