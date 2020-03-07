@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH PASS-MOUNT 1 "2018-03-06" "0.0.1" "Password Store Extension"
+.TH PASS-MOUNT 1 "2018-03-06" "0.1.0" "Password Store Extension"
 .SH NAME
 pass-mount \- A Password Store extension for managing encrypted filesystems.
 .
@@ -63,7 +63,7 @@ Unmount an encrypted filesystem.
 .B help, \-h, \-\-help
 Show usage message.
 .UNINDENT
-.SH EXAMPLE CONFIG
+.SH EXAMPLE CONFIG - CRYFS
 .sp
 Configuration can be manually edited by using \fBpass edit\fP \fIpass\-name\fP\&.
 Relative directory paths in the config are automatically prepended with $HOME.
@@ -73,8 +73,26 @@ Relative directory paths in the config are automatically prepended with $HOME.
 .nf
 .ft C
 my_password
+type: cryfs
 basedir: .cryfs/encrypted_dir
 mountpoint: /usr/local/data
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH EXAMPLE CONFIG - UDISKS
+.sp
+Configuration can be manually edited by using \fBpass edit\fP \fIpass\-name\fP\&.
+The uuid can be determined by running
+\fBfindmnt \-\-target /media/$USER/$DISK_LABEL \-\-output SOURCE \-\-noheadings\fP
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+my_password
+type: udisks
+uuid: 222254e3\-c547\-4b4e\-823a\-5181698e0a39
 .ft P
 .fi
 .UNINDENT

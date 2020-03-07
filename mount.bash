@@ -18,11 +18,11 @@
 
 CRYFS=$(which cryfs)
 
-MOUNT_OPTS=(
+CRYFS_MOUNT_OPTS=(
   --unmount-idle 10
 )
 
-mount_export_env() {
+mount_export_cryfs_env() {
   export CRYFS_FRONTEND=noninteractive
   export CRYFS_NO_UPDATE_CHECK=true
 }
@@ -36,20 +36,31 @@ mount_config() {
 
   contents=$($GPG -d "${GPG_OPTS[@]}" "$passfile")
   mount_password=${contents%%$'\n'*}
+  mount_passname="$path"
   while read -r -a line; do
-    if [[ "$line" == basedir: ]]; then 
+    if [[ "$line" == type: ]]; then
+      mount_type="${line[1]}"
+    fi
+    if [[ "$line" == uuid: ]]; then
+      mount_uuid="${line[1]}"
+    fi
+    if [[ "$line" == basedir: ]]; then
       mount_basedir="${line[1]}"
       if [[ ! "$mount_basedir" =~ ^/ ]]; then
         mount_basedir="$HOME/$mount_basedir"
       fi
-    fi 
-    if [[ "$line" == mountpoint: ]]; then 
+    fi
+    if [[ "$line" == mountpoint: ]]; then
       mount_mountpoint="${line[1]}"
       if [[ ! "$mount_mountpoint" =~ ^/ ]]; then
         mount_mountpoint="$HOME/$mount_mountpoint"
       fi
-    fi 
+    fi
   done <<< "$contents"
+  if [[ -z "$mount_type" ]]; then
+    echo "Deprecated config format detected - please set 'type: cryfs'" >&2
+    mount_type="cryfs"
+  fi
 }
 
 cmd_mount_usage() {
@@ -74,6 +85,20 @@ _EOF
 cmd_mount_init() {
   local path="$1"
 
+  if [[ -t 0 ]]; then
+    read -e -r -p "Volume encryption type ('cryfs','udisks'): " mount_type || exit 1
+    mount_type=$(echo "$mount_type" | tr '[:upper:]' '[:lower:]')
+  else
+    read -r mount_type
+  fi
+  case "$mount_type" in
+    cryfs)          shift; cmd_mount_cryfs_init ;;
+    udisks)         shift; die "Udisks initialization not yet supported" ;;
+    *)              die "Error: Invalid config 'type: $mount_type'" ;;
+  esac
+}
+
+cmd_mount_cryfs_init() {
   if [[ -t 0 ]]; then
     read -e -r -p "Enter the directory for storing encrypted data for $path: " mount_basedir || exit 1
   else
@@ -142,29 +167,49 @@ mountpoint: $mount_mountpoint"
     die "mountpoint:$mount_mountpoint already exists"
   fi
 
-  mount_export_env
-  $CRYFS "${MOUNT_OPTS[@]}" "$mount_basedir" "$mount_mountpoint" >/dev/null <<<"$mount_password"
+  mount_export_cryfs_env
+  $CRYFS "${CRYFS_MOUNT_OPTS[@]}" "$mount_basedir" "$mount_mountpoint" >/dev/null <<<"$mount_password"
 }
 
 cmd_mount_target() {
   mount_config "$1"
-  local path="$1"
-  [[ ! -d "$mount_basedir" ]] && die "basedir:$mount_basedir not found - Run '$PROGRAM $COMMAND init $path' to initialize"
-  [[ ! -f "$mount_basedir/cryfs.config" ]] && die "config:$mount_basedir/cryfs.config not found - Run '$PROGRAM $COMMAND init $path' to initialize"
-  [[ ! -d $mount_mountpoint ]] && die "mountpoint:$mount_mountpoint not found - Run '$PROGRAM $COMMAND init $path' to initialize"
+  case "$mount_type" in
+    cryfs)          shift; cmd_mount_cryfs_target ;;
+    udisks)         shift; cmd_mount_udisks_target ;;
+    *)              die "Error: Invalid config 'type: $mount_type'" ;;
+  esac
+}
+
+cmd_mount_cryfs_target() {
+  [[ ! -d "$mount_basedir" ]] && die "basedir:$mount_basedir not found - Run '$PROGRAM $COMMAND init $mount_passname' to initialize"
+  [[ ! -f "$mount_basedir/cryfs.config" ]] && die "config:$mount_basedir/cryfs.config not found - Run '$PROGRAM $COMMAND init $mount_passname' to initialize"
+  [[ ! -d $mount_mountpoint ]] && die "mountpoint:$mount_mountpoint not found - Run '$PROGRAM $COMMAND init $mount_passname' to initialize"
   mountpoint "$mount_mountpoint" > /dev/null && die "mountpoint:$mount_mountpoint already mounted"
   [[ "$( find "$mount_mountpoint" -mindepth 1 -maxdepth 1 | wc -l )" -ne 0 ]] && die "mountpoint:$mount_mountpoint not empty - Check target mountpoint"
 
-  mount_export_env
-  $CRYFS "${MOUNT_OPTS[@]}" "$mount_basedir" "$mount_mountpoint" >/dev/null <<<"$mount_password"
+  mount_export_cryfs_env
+  $CRYFS "${CRYFS_MOUNT_OPTS[@]}" "$mount_basedir" "$mount_mountpoint" >/dev/null <<<"$mount_password"
+}
+
+cmd_mount_udisks_target() {
+  udisksctl unlock --block-device /dev/disk/by-uuid/$mount_uuid --key-file <(printf '%s' $mount_password)
+  udisksctl mount --block-device /dev/mapper/luks-$mount_uuid
 }
 
 cmd_mount_status() {
   mount_config "$1"
+  case "$mount_type" in
+    cryfs)          shift; cmd_mount_cryfs_status ;;
+    udisks)         shift; cmd_mount_udisks_status ;;
+    *)              echo "Error: Invalid config 'type: $mount_type'" >&2 ;;
+  esac
+}
+
+cmd_mount_cryfs_status() {
   if [[ -d "$mount_basedir" ]] && [[ -f "$mount_basedir/cryfs.config" ]]; then
     echo "basedir: $mount_basedir initialized"
   else
-    echo "basedir: $mount_basedir is not initialized - Run '$PROGRAM $COMMAND init $path' to initialize"
+    echo "basedir: $mount_basedir is not initialized - Run '$PROGRAM $COMMAND init $mount_passname' to initialize"
   fi
 
   if [[ $(eval mountpoint "$mount_mountpoint") =~ is\ a\ mountpoint$ ]]; then
@@ -172,7 +217,18 @@ cmd_mount_status() {
   elif [[ -d $mount_mountpoint ]]; then
     echo "mountpoint: $mount_mountpoint is unmounted"
   else
-    echo "mountpoint: $mount_mountpoint is not initialized - Run '$PROGRAM $COMMAND init $path' to initialize"
+    echo "mountpoint: $mount_mountpoint is not initialized - Run '$PROGRAM $COMMAND init $mount_passname' to initialize"
+  fi
+}
+
+cmd_mount_udisks_status() {
+  if [[ -e "/dev/mapper/luks-$mount_uuid" ]]; then
+    mount_mountpoint=$(findmnt --noheadings --source "/dev/mapper/luks-$mount_uuid" --output TARGET)
+    echo "$mount_passname [$mount_uuid] is mounted at $mount_mountpoint"
+  elif [[ -e "/dev/disk/by-uuid/$mount_uuid" ]]; then
+    echo "$mount_passname [$mount_uuid] is not mounted"
+  else
+    echo "$mount_passname [$mount_uuid] is not detected"
   fi
 }
 

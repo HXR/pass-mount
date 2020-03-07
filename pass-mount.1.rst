@@ -9,7 +9,7 @@ A Password Store extension for managing encrypted filesystems.
 :Author: Lucid One <LucidOne@users.noreply.github.com>
 :Date:   2018-03-06
 :Copyright: GPLv3
-:Version: 0.0.1
+:Version: 0.1.0
 :Manual section: 1
 :Manual group: Password Store Extension
  
@@ -57,15 +57,27 @@ OPTIONS
 help, -h, \--help
   Show usage message.
 
-EXAMPLE CONFIG
-==============
+EXAMPLE CONFIG - CRYFS
+======================
 Configuration can be manually edited by using **pass edit** `pass-name`.
 Relative directory paths in the config are automatically prepended with $HOME.
 ::
 
   my_password
+  type: cryfs
   basedir: .cryfs/encrypted_dir
   mountpoint: /usr/local/data
+
+EXAMPLE CONFIG - UDISKS
+=======================
+Configuration can be manually edited by using **pass edit** `pass-name`.
+The uuid can be determined by running
+**findmnt --target /media/$USER/$DISK_LABEL --output SOURCE --noheadings**
+::
+
+  my_password
+  type: udisks
+  uuid: 222254e3-c547-4b4e-823a-5181698e0a39
 
 SEE ALSO
 ========

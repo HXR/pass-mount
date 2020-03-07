@@ -27,7 +27,13 @@ umount_config() {
 
   contents=$($GPG -d "${GPG_OPTS[@]}" "$passfile")
   while read -r -a line; do
-    if [[ "$line" == mountpoint: ]]; then 
+    if [[ "$line" == type: ]]; then
+      mount_type="${line[1]}"
+    fi
+    if [[ "$line" == uuid: ]]; then
+      mount_uuid="${line[1]}"
+    fi
+    if [[ "$line" == mountpoint: ]]; then
       mount_mountpoint="${line[1]}"
       if [[ ! "$mount_mountpoint" =~ ^/ ]]; then
         mount_mountpoint="$HOME/$mount_mountpoint"
@@ -51,8 +57,21 @@ _EOF
 cmd_umount_target() {
   umount_config "$1"
   local path="$1"
+  case "$mount_type" in
+    cryfs)          shift; cmd_umount_cryfs_target ;;
+    udisks)         shift; cmd_umount_udisks_target ;;
+    *)              die "Error: Invalid config 'type: $mount_type'" ;;
+  esac
+}
+
+cmd_umount_cryfs_target() {
   mountpoint "$mount_mountpoint" > /dev/null || die "mountpoint:$mount_mountpoint already unmounted"
   $FUSERMOUNT -u "$mount_mountpoint"
+}
+
+cmd_umount_udisks_target() {
+  udisksctl unmount --block-device /dev/mapper/luks-$mount_uuid
+  udisksctl lock --block-device /dev/disk/by-uuid/$mount_uuid
 }
 
 case "$1" in

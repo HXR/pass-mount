@@ -24,23 +24,26 @@ Usage:
 More information may be found in the pass-mount(1) man page.
 ```
 
-## :rotating_light: WARNING :rotating_light:  
-Under active development  
+## :rotating_light: WARNING :rotating_light:
+Under "active" development  
 Configuration format unstable and upgrade may require manual edits  
 Cryfs is unstable - backup your data  
+### 0.0.1 -> 0.1.0 Breaking changes
+Cryfs based mountpoints now require `type: cryfs` in the [configuration](#example-config)
 
 ## NEWS
-0.0.1
-  Initial release! :penguin:
+0.1.0
+  Initial udisks support
 
-## KNOWN BUGS
+## KNOWN BUGS/ISSUES
+### Cryfs
 - Some versions of cryfs block if /dev/random runs out of entropy
 - [Cryfs is not a journaling filesystem](https://github.com/cryfs/cryfs/issues/209)
 
 ## TODO
-- [ ] support additional encrypted filesystems
+- [/] support additional encrypted filesystems
   - [ ] LUKS loopback
-  - [ ] Mouting LUKS filesystems by UUID
+  - [X] Mouting LUKS filesystems by UUID
 - [ ] Improve configuration system
   - [ ] Cryfs update check
   - [ ] Unmount idle time
@@ -52,10 +55,35 @@ Cryfs is unstable - backup your data
 - [ ] CI
 
 ## Example Config
+### Cryfs
+Cryfs config -- multi-line entry in `pass`
 ```
 encrypted-volume-password-here
+type: cryfs
 basedir: .cryfs/data
 mountpoint: /home/username/data
+```
+
+### Udisks
+`pass-mount` can handle excrypted LUKS volumes that have been created with `gnome-disks`.
+
+The udisks config can be manually initialized via
+`pass edit mount/mydisklabel`
+The uuid can be determined by running
+`findmnt --target /media/$USER/$DISK_LABEL --output SOURCE --noheadings`
+while the encrypted volume has been manually mounted.
+
+Udisks config -- multi-line entry in `pass`
+```
+encrypted-volume-password-here
+type: udisks
+uuid: 222254e3-c547-4b4e-823a-5181698e0a39
+```
+
+For operating systems such as Ubuntu where hot-plugging an encrypted volume will cause udisks to generate a password dialog, one of the following udev rules can be used to disable automatic mounting via udisks.
+```
+70-udisks-ignore-luks.rules
+70-udisks-ignore-uuid.rules
 ```
 
 ## Installation

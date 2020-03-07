@@ -1,0 +1,3 @@
+# UUID can be determined via
+# `findmnt --target /media/$USER/$DISK_LABEL --output SOURCE --noheadings`
+KERNEL=="sd*", ENV{ID_FS_UUID}=="222254e3-c547-4b4e-823a-5181698e0a39", ENV{UDISKS_AUTO}="0"
