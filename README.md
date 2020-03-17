@@ -32,6 +32,8 @@ Cryfs is unstable - backup your data
 Cryfs based mountpoints now require `type: cryfs` in the [configuration](#example-config)
 
 ## NEWS
+0.1.1
+  Cryptsetup support
 0.1.0
   Initial udisks support
 
@@ -41,9 +43,8 @@ Cryfs based mountpoints now require `type: cryfs` in the [configuration](#exampl
 - [Cryfs is not a journaling filesystem](https://github.com/cryfs/cryfs/issues/209)
 
 ## TODO
-- [/] support additional encrypted filesystems
+- [ ] support additional encrypted filesystems
   - [ ] LUKS loopback
-  - [X] Mouting LUKS filesystems by UUID
 - [ ] Improve configuration system
   - [ ] Cryfs update check
   - [ ] Unmount idle time
@@ -65,7 +66,7 @@ mountpoint: /home/username/data
 ```
 
 ### Udisks
-`pass-mount` can handle excrypted LUKS volumes that have been created with `gnome-disks`.
+`pass-mount` can handle encrypted LUKS volumes that have been created with `gnome-disks`.
 
 The udisks config can be manually initialized via
 `pass edit mount/mydisklabel`
@@ -84,6 +85,21 @@ For operating systems such as Ubuntu where hot-plugging an encrypted volume will
 ```
 70-udisks-ignore-luks.rules
 70-udisks-ignore-uuid.rules
+```
+
+### Cryptsetup
+On systems without `udisks` installed `pass-mount` can mount encrypted LUKS volumes by calling `cryptsetup` via `sudo`.
+
+A cryptsetup config can be manually initialized via
+`pass edit mount/mydisklabel`
+As an example, the uuid for /dev/sdb1 can be determined by running
+`udevadm info /dev/sdb1 | grep ID_FS_UUID=`
+
+cryptsetup config -- multi-line entry in `pass`
+```
+encrypted-volume-password-here
+type: cryptsetup
+uuid: 222254e3-c547-4b4e-823a-5181698e0a39
 ```
 
 ## Installation

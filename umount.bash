@@ -60,6 +60,7 @@ cmd_umount_target() {
   case "$mount_type" in
     cryfs)          shift; cmd_umount_cryfs_target ;;
     udisks)         shift; cmd_umount_udisks_target ;;
+    cryptsetup)     shift; cmd_umount_cryptsetup_target ;;
     *)              die "Error: Invalid config 'type: $mount_type'" ;;
   esac
 }
@@ -70,8 +71,21 @@ cmd_umount_cryfs_target() {
 }
 
 cmd_umount_udisks_target() {
+  [[ -e "/dev/mapper/luks-$mount_uuid" ]] || die "mountpoint:$path already unmounted"
   udisksctl unmount --block-device /dev/mapper/luks-$mount_uuid
   udisksctl lock --block-device /dev/disk/by-uuid/$mount_uuid
+}
+
+cmd_umount_cryptsetup_target() {
+  mapfile sudo_cmd <<_EOF
+export mount_label=\$(e2label /dev/mapper/luks-$mount_uuid || echo "unknown")
+umount /media/crypt/\$mount_label
+cryptsetup close luks-$mount_uuid
+rmdir /media/crypt/\$mount_label
+_EOF
+
+  [[ -e "/dev/mapper/luks-$mount_uuid" ]] || die "$path [$mount_uuid] is not mounted"
+  sudo -- bash -c "${sudo_cmd[*]}"
 }
 
 case "$1" in

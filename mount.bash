@@ -22,6 +22,8 @@ CRYFS_MOUNT_OPTS=(
   --unmount-idle 10
 )
 
+PASS_MOUNT_CRYPT_MODE="755"
+
 mount_export_cryfs_env() {
   export CRYFS_FRONTEND=noninteractive
   export CRYFS_NO_UPDATE_CHECK=true
@@ -86,7 +88,7 @@ cmd_mount_init() {
   local path="$1"
 
   if [[ -t 0 ]]; then
-    read -e -r -p "Volume encryption type ('cryfs','udisks'): " mount_type || exit 1
+    read -e -r -p "Volume encryption type ('cryfs','udisks','cryptsetup'): " mount_type || exit 1
     mount_type=$(echo "$mount_type" | tr '[:upper:]' '[:lower:]')
   else
     read -r mount_type
@@ -94,6 +96,7 @@ cmd_mount_init() {
   case "$mount_type" in
     cryfs)          shift; cmd_mount_cryfs_init ;;
     udisks)         shift; die "Udisks initialization not yet supported" ;;
+    cryptsetup)     shift; die "cryptsetup initialization not yet supported" ;;
     *)              die "Error: Invalid config 'type: $mount_type'" ;;
   esac
 }
@@ -176,6 +179,7 @@ cmd_mount_target() {
   case "$mount_type" in
     cryfs)          shift; cmd_mount_cryfs_target ;;
     udisks)         shift; cmd_mount_udisks_target ;;
+    cryptsetup)     shift; cmd_mount_cryptsetup_target ;;
     *)              die "Error: Invalid config 'type: $mount_type'" ;;
   esac
 }
@@ -196,11 +200,38 @@ cmd_mount_udisks_target() {
   udisksctl mount --block-device /dev/mapper/luks-$mount_uuid
 }
 
+cmd_mount_cryptsetup_target() {
+  mapfile sudo_cmd <<_EOF
+/sbin/cryptsetup open --type=luks \
+/dev/disk/by-uuid/$mount_uuid luks-$mount_uuid
+export mount_label=\$(e2label /dev/mapper/luks-$mount_uuid || echo "unknown")
+if mountpoint /media/crypt/\$mount_label 2> /dev/null; then
+  echo "Error: Mountpoint /media/crypt/\$mount_label already in use"
+  /sbin/cryptsetup close luks-$mount_uuid
+else
+  [[ -d "/media/crypt" ]] || mkdir --mode=$PASS_MOUNT_CRYPT_MODE /media/crypt > /dev/null
+  mkdir "/media/crypt/\$mount_label" > /dev/null
+  mount /dev/mapper/luks-$mount_uuid /media/crypt/\$mount_label
+fi
+_EOF
+
+  if [[ -e "/dev/mapper/luks-$mount_uuid" ]]; then
+    mount_mountpoint=$(findmnt --noheadings --source "/dev/mapper/luks-$mount_uuid" --output TARGET)
+    if [[ -z "$mount_mountpoint" ]]; then
+      die "$mount_passname [$mount_uuid] is unlocked at /dev/mapper/luks-$mount_uuid"
+    else
+      die "$mount_passname [$mount_uuid] is mounted at $mount_mountpoint"
+    fi
+  fi
+  printf '%s' $mount_password | sudo -- bash -c "${sudo_cmd[*]}"
+}
+
 cmd_mount_status() {
   mount_config "$1"
   case "$mount_type" in
     cryfs)          shift; cmd_mount_cryfs_status ;;
-    udisks)         shift; cmd_mount_udisks_status ;;
+    udisks)         shift; cmd_mount_luks_status ;;
+    cryptsetup)     shift; cmd_mount_luks_status ;;
     *)              echo "Error: Invalid config 'type: $mount_type'" >&2 ;;
   esac
 }
@@ -221,7 +252,7 @@ cmd_mount_cryfs_status() {
   fi
 }
 
-cmd_mount_udisks_status() {
+cmd_mount_luks_status() {
   if [[ -e "/dev/mapper/luks-$mount_uuid" ]]; then
     mount_mountpoint=$(findmnt --noheadings --source "/dev/mapper/luks-$mount_uuid" --output TARGET)
     echo "$mount_passname [$mount_uuid] is mounted at $mount_mountpoint"
