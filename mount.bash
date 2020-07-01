@@ -85,18 +85,35 @@ _EOF
 }
 
 cmd_mount_init() {
-  local path="$1"
+  local opts dry_run=0 mount_type mount_dev mount_label
+  opts="$($GETOPT -o t:d:l: -l type:,device:,label:,dry-run -n "$PROGRAM" -- "$@")"
+  local err=$?
+  eval set -- "$opts"
+  while true; do case $1 in
+    -t|--type) mount_type="$2"; shift 2 ;;
+    -d|--device) mount_dev="$2"; shift 2 ;;
+    -l|--label) mount_label="$2"; shift 2 ;;
+    --dry-run) dry_run=1; shift ;;
+    --) shift; break ;;
+  esac done
+  local path="${1%/}"
 
-  if [[ -t 0 ]]; then
-    read -e -r -p "Volume encryption type ('cryfs','udisks','cryptsetup'): " mount_type || exit 1
-    mount_type=$(echo "$mount_type" | tr '[:upper:]' '[:lower:]')
-  else
-    read -r mount_type
+  [[ $err -ne 0 || $# -lt 1 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [--type[=mount-type],-t[mount-type]] [--device[=dev],-d[dev]] [--label[=label],-l[label]] [--dry-run] pass-name"
+
+  if [[ ! $mount_type ]]; then
+    if [[ -t 0 ]]; then
+      read -e -r -p "Volume encryption type ('cryfs','udisks','cryptsetup'): " mount_type || exit 1
+      mount_type=$(echo "$mount_type" | tr '[:upper:]' '[:lower:]')
+    else
+      read -r mount_type
+    fi
   fi
   case "$mount_type" in
-    cryfs)          shift; cmd_mount_cryfs_init ;;
-    udisks)         shift; die "Udisks initialization not yet supported" ;;
-    cryptsetup)     shift; die "cryptsetup initialization not yet supported" ;;
+    udisks|cryptsetup)
+      source "$(dirname ${BASH_SOURCE[0]})/mount-init-cryptsetup.bash"
+      cmd_mount_cryptsetup_init "$@"
+      ;;
+    cryfs)          cmd_mount_cryfs_init ;;
     *)              die "Error: Invalid config 'type: $mount_type'" ;;
   esac
 }
@@ -263,6 +280,7 @@ cmd_mount_luks_status() {
   fi
 }
 
+SUBCOMMAND="$1"
 case "$1" in
   help|--help|-h) shift; cmd_mount_usage "$@" ;;
   init)           shift; cmd_mount_init "$@" ;;

@@ -102,6 +102,11 @@ type: cryptsetup
 uuid: 222254e3-c547-4b4e-823a-5181698e0a39
 ```
 
+## Under development
+Initial work for initialization of full-disk encryption in progrss
+THIS WILL PROBABLY DESTROY YOUR SYSTEM
+`pass mount init --type udisks -d /dev/sdb --label ORIGIN --dry-run disk/test`
+
 ## Installation
 
 ### From git
