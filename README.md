@@ -120,7 +120,7 @@ cd pass-mount
 sudo make install
 ```
 
-### Requirements
+### Dependencies
 - cryfs
   https://github.com/cryfs/cryfs
 - pass
