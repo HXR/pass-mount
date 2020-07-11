@@ -28,10 +28,13 @@ More information may be found in the pass-mount(1) man page.
 Under "active" development  
 Configuration format unstable and upgrade may require manual edits  
 Cryfs is unstable - backup your data  
+
 ### 0.0.1 -> 0.1.0 Breaking changes
 Cryfs based mountpoints now require `type: cryfs` in the [configuration](#example-config)
 
 ## NEWS
+0.2.0
+  **Initial** support for initializing cryptsetup based LUKS volumes
 0.1.1
   Cryptsetup support
 0.1.0
