@@ -110,6 +110,8 @@ Initial work for initialization of full-disk encryption in progrss
 THIS WILL PROBABLY DESTROY YOUR SYSTEM
 `pass mount init --type udisks -d /dev/sdb --label ORIGIN --dry-run disk/test`
 
+**WARNING**: This code runs `parted` and can do serious damage.
+
 ## Installation
 
 ### From git
