@@ -1,1 +1,2 @@
+# Automount via udisks can be disabled for all LUKS devices
 KERNEL=="sd*", ENV{ID_FS_TYPE}=="crypto_LUKS", ENV{UDISKS_AUTO}="0"
