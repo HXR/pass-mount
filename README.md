@@ -121,6 +121,8 @@ sudo make install
 ```
 
 ### Dependencies
+- cryptsetup
+  https://gitlab.com/cryptsetup/cryptsetup
 - cryfs
   https://github.com/cryfs/cryfs
 - pass
