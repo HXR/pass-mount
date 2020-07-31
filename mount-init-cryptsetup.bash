@@ -31,12 +31,18 @@ cmd_mount_cryptsetup_init() {
 	fi
 	[[ -b $mount_dev ]] || die "Error: Block device $mount_dev not found"
 
+	if [[ $mount_dev =~ ^/dev/loop ]]; then
+		mount_align="2048s"
+	else
+		mount_align="0%"
+	fi
+
 	mapfile sudo_cmd <<-_EOF
 		parted --script $mount_dev print || true
 		read -n1 -rsp $'Press any key to continue or Ctrl+C to exit...\n'
 		echo "Processing..."
 		parted --script --align optimal $mount_dev mklabel gpt
-		parted --script --align optimal $mount_dev mkpart primary 0% 100%
+		parted --script --align optimal $mount_dev mkpart primary ${mount_align} 100%
 		partprobe $mount_dev
 	_EOF
 

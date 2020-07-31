@@ -1,11 +1,16 @@
 image: ubuntu/bionic
 packages:
+  - coreutils
   - udisks2
+  - pass
 sources:
   - https://git.sr.ht/~lucidone/pass-mount
 tasks:
   - test: |
-      cd pass-mount
       export LC_ALL=C.UTF-8
       export LANG=C.UTF-8
+      cd pass-mount
+      make install
+      dd if=/dev/zero of=~/test.img bs=1024k count=8
       udisksctl loop-setup --file ~/test.img
+      gpg2 --pinentry-mode loopback --batch --no-tty --yes --passphrase '' --quick-generate-key test@test rsa1024 sign 1y
