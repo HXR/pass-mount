@@ -22,8 +22,7 @@ tasks:
       export TEST_START=$(date +%s)
       pass mount data/loop
       ls -la /media/build/loop
-      date +%s > /media/build/loop/date.log
-      sleep 10 &&  date +%s
+      echo "TEST_CHECK=${TEST_START}" > /media/build/loop/date.log
       pass umount data/loop
       if [[ -f /media/build/loop/date.log ]]; then
         echo "Error: umount failed"
@@ -34,9 +33,9 @@ tasks:
         echo "Error: mount failed"
         exit
       fi
-      export TEST_CHECK=$(cat /media/build/loop/date.log)
-      export TEST_START=$(date +%s)
-      if [[ ! "${TEST_START}" = "${TEST_CHECK}" ]]; then
+      source /media/build/loop/date.log
+      export TEST_STOP=$(date +%s)
+      if [[ ! "${TEST_START}" -eq "${TEST_CHECK}" ]]; then
         echo "Error: logged date doesn't match"
         exit
       fi
