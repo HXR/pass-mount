@@ -38,12 +38,11 @@ cmd_mount_cryptsetup_init() {
 	fi
 
 	mapfile sudo_cmd <<-_EOF
-		parted --script $mount_dev print
-		read -n1 -rsp $'Press any key to continue or Ctrl+C to exit...\n'
+		parted --script $mount_dev print || true
+		read -n1 -rsp $'Press any key to continue or Ctrl+C to exit...\n' || true
 		echo "Processing..."
 		parted --script --align optimal $mount_dev mklabel gpt
 		parted --script --align optimal $mount_dev mkpart primary ${mount_align} 100%
-		sync && sleep 1
 		partprobe $mount_dev
 	_EOF
 
