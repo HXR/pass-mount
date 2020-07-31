@@ -19,12 +19,25 @@ tasks:
       pass init ci@test
       export CRYPTSETUP_ARGS="--type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 8192 --use-urandom"
       pass mount init --type udisks -d /dev/loop0 --label loop data/loop < /dev/null
+      export TEST_START=$(date +%s)
       pass mount data/loop
       ls -la /media/build/loop
       date +%s > /media/build/loop/date.log
       sleep 10 &&  date +%s
       pass umount data/loop
-      ls --recursive /media
+      if [[ -f /media/build/loop/date.log ]]; then
+        echo "Error: umount failed"
+        exit
+      fi
       pass mount data/loop
-      date +%s
-      cat /media/build/loop/date.log
+      if [[ ! -f /media/build/loop/date.log ]]; then
+        echo "Error: mount failed"
+        exit
+      fi
+      export TEST_CHECK=$(cat /media/build/loop/date.log)
+      export TEST_START=$(date +%s)
+      if [[ ! "${TEST_START}" = "${TEST_CHECK}" ]]; then
+        echo "Error: logged date doesn't match"
+        exit
+      fi
+      echo "Duration: $((${TEST_STOP}-${TEST_START}))"
