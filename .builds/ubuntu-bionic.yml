@@ -1,0 +1,49 @@
+image: ubuntu/bionic
+packages:
+  - udisks2
+  - pass
+  - cryptsetup-bin
+sources:
+  - https://git.sr.ht/~lucidone/pass-mount
+tasks:
+  - test: |
+      export LC_ALL=C.UTF-8
+      export LANG=C.UTF-8
+      cd pass-mount
+      sudo make install
+      sudo cp .builds/udisks.pkla /var/lib/polkit-1/localauthority/50-local.d/.
+      sudo systemctl restart udisks2
+      dd if=/dev/zero of=~/test.img bs=1024k count=8
+      udisksctl loop-setup --file ~/test.img
+      gpg2 --batch --no-tty --yes --passphrase '' --quick-generate-key ci@test rsa1024 encrypt 1y
+      pass init ci@test
+      export CRYPTSETUP_ARGS="--type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 8192 --use-urandom"
+      pass mount init --type udisks -d /dev/loop0 --label loop data/loop < /dev/null
+      export TEST_START=$(date +%s)
+      pass mount data/loop
+      ls -la /media/build/loop
+      echo "TEST_CHECK=${TEST_START}" > /media/build/loop/date.log
+      pass umount data/loop
+      if [[ -f /media/build/loop/date.log ]]; then
+        echo "Error: umount failed"
+        exit
+      fi
+      pass mount data/loop
+      if [[ ! -f /media/build/loop/date.log ]]; then
+        echo "Error: mount failed"
+        exit
+      fi
+      source /media/build/loop/date.log
+      export TEST_STOP=$(date +%s)
+      if [[ ! "${TEST_START}" -eq "${TEST_CHECK}" ]]; then
+        echo "Error: logged date doesn't match"
+        exit
+      fi
+      TEST_DURATION=$((${TEST_STOP}-${TEST_START}))
+      echo "Duration: ${TEST_DURATION}"
+      if [[ ${TEST_DURATION} -lt 2 ]]; then
+        echo "Error: test duration too short"
+      fi
+      if [[ ${TEST_DURATION} -gt 45 ]]; then
+        echo "Error: test duration too long"
+      fi

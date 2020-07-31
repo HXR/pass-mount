@@ -1,5 +1,21 @@
 # pass-mount
 
+[![builds.sr.ht status](https://builds.sr.ht/~lucidone/pass-mount.svg)](https://builds.sr.ht/~lucidone/pass-mount?)
+
+-----
+
+**Table of Contents**
+
+* [Overview](#overview)
+* [Usage](#usage)
+* [News](#news)
+* [TODO](#todo)
+* [Example Config](#example-config)
+* [Installation](#installation)
+* [License](#license)
+
+## Overview
+
 A [pass](https://www.passwordstore.org/) extension for mounting encrypted
 filesystems.
 
@@ -24,27 +40,30 @@ Usage:
 More information may be found in the pass-mount(1) man page.
 ```
 
-## :rotating_light: WARNING :rotating_light:
+## NEWS
+0.2.1
+  Initial loopback support  
+  Initial test infrastrusture  
+0.2.0
+  **Initial** support for initializing cryptsetup based LUKS volumes  
+
+### KNOWN BUGS/ISSUES
+
+#### :rotating_light: WARNING :rotating_light:
 Under "active" development  
 Configuration format unstable and upgrade may require manual edits  
 Cryfs is unstable - backup your data  
-### 0.0.1 -> 0.1.0 Breaking changes
+
+#### 0.0.1 -> 0.1.0 Breaking changes
 Cryfs based mountpoints now require `type: cryfs` in the [configuration](#example-config)
 
-## NEWS
-0.1.1
-  Cryptsetup support
-0.1.0
-  Initial udisks support
-
-## KNOWN BUGS/ISSUES
-### Cryfs
+#### Cryfs
 - Some versions of cryfs block if /dev/random runs out of entropy
 - [Cryfs is not a journaling filesystem](https://github.com/cryfs/cryfs/issues/209)
 
 ## TODO
-- [ ] support additional encrypted filesystems
-  - [ ] LUKS loopback
+- [X] support additional encrypted filesystems
+  - [X] LUKS loopback
 - [ ] Improve configuration system
   - [ ] Cryfs update check
   - [ ] Unmount idle time
@@ -53,7 +72,7 @@ Cryfs based mountpoints now require `type: cryfs` in the [configuration](#exampl
   - [ ] --version
   - [ ] `pass mount init --force pass-name` to overwrite config
 - [ ] Implement unit tests
-- [ ] CI
+- [X] CI
 
 ## Example Config
 ### Cryfs
@@ -102,6 +121,13 @@ type: cryptsetup
 uuid: 222254e3-c547-4b4e-823a-5181698e0a39
 ```
 
+## Under development
+Initial work for initialization of full-disk encryption in progrss
+THIS WILL PROBABLY DESTROY YOUR SYSTEM
+`pass mount init --type udisks -d /dev/sdb --label ORIGIN --dry-run disk/test`
+
+**WARNING**: This code runs `parted` and can do serious damage.
+
 ## Installation
 
 ### From git
@@ -112,7 +138,9 @@ cd pass-mount
 sudo make install
 ```
 
-### Requirements
+### Dependencies
+- cryptsetup
+  https://gitlab.com/cryptsetup/cryptsetup
 - cryfs
   https://github.com/cryfs/cryfs
 - pass

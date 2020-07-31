@@ -1,3 +1,4 @@
+# This disables udisks automounting for a specific device
 # UUID can be determined via
 # `findmnt --target /media/$USER/$DISK_LABEL --output SOURCE --noheadings`
 # or `udevadm info /dev/sdb1 | grep ID_FS_UUID=`
