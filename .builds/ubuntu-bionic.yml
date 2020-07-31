@@ -12,8 +12,10 @@ tasks:
       cd pass-mount
       sudo make install
       sudo cp .builds/udisks.pkla /var/lib/polkit-1/localauthority/50-local.d/.
+      sudo systemctl restart udisks2
       dd if=/dev/zero of=~/test.img bs=1024k count=8
-      sudo udisksctl loop-setup --file ~/test.img
+      udisksctl loop-setup --file ~/test.img
       gpg2 --batch --no-tty --yes --passphrase '' --quick-generate-key ci@test rsa1024 encrypt 1y
       pass init ci@test
       pass mount init --type udisks -d /dev/loop0 --label loop data/loop < /dev/null
+      ls -la /media/build
