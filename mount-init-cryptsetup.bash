@@ -38,7 +38,7 @@ cmd_mount_cryptsetup_init() {
 	fi
 
 	mapfile sudo_cmd <<-_EOF
-		parted --script $mount_dev print || true
+		parted --script $mount_dev print
 		read -n1 -rsp $'Press any key to continue or Ctrl+C to exit...\n'
 		echo "Processing..."
 		parted --script --align optimal $mount_dev mklabel gpt
@@ -74,7 +74,7 @@ cmd_mount_cryptsetup_init() {
 	else
 		pass generate $path $CRYPTSETUP_PASS_LENGTH >& /dev/null || exit $?
 		pass="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | head -n 1)" || exit $?
-		sudo -- bash -c "set -eo pipefail; ${sudo_cmd[*]}"
+		sudo -- bash -c "set -e; ${sudo_cmd[*]}"
 		[[ -b $mount_part ]] || die "Error: Partition $mount_part not found"
 		printf '%s' $pass | sudo -- bash -c "$format_cmd"
 		CRYPTSETUP_UUID=$(sudo -- bash -c "$uuid_cmd")
