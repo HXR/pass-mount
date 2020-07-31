@@ -43,7 +43,7 @@ cmd_mount_cryptsetup_init() {
 		echo "Processing..."
 		parted --script --align optimal $mount_dev mklabel gpt
 		parted --script --align optimal $mount_dev mkpart primary ${mount_align} 100%
-		sync
+		sync && sleep 1
 		partprobe $mount_dev
 	_EOF
 
