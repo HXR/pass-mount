@@ -20,4 +20,11 @@ tasks:
       export CRYPTSETUP_ARGS="--type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 8192 --use-urandom"
       pass mount init --type udisks -d /dev/loop0 --label loop data/loop < /dev/null
       pass mount data/loop
-      ls -la /media/build
+      ls -la /media/build/loop
+      date +%s > /media/build/loop/date.log
+      sleep 10 &&  date +%s
+      pass umount data/loop
+      ls --recursive /media
+      pass mount data/loop
+      date +%s
+      cat /media/build/loop/date.log
