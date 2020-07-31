@@ -20,6 +20,8 @@ set -o pipefail
 CRYPTSETUP=$(which cryptsetup || die cryptsetup not found)
 CRYPTSETUP_PASS_LENGTH="${CRYPTSETUP_PASS_LENGTH:-25}"
 CRYPTSETUP_ARGS="${CRYPTSETUP_ARGS:---type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 8192 --use-random}"
+CRYPTSETUP_USER="${CRYPTSETUP_USER:-$USER}"
+CRYPTSETUP_GROUP="${CRYPTSETUP_GROUP:-$(id -gn)}"
 
 cmd_mount_cryptsetup_init() {
 	local pass
@@ -65,6 +67,12 @@ cmd_mount_cryptsetup_init() {
 		echo "CRYPTSETUP_UUID=\$(sudo -- bash -c \"$uuid_cmd\")"
 		echo "sudo -- bash -c \"$CRYPTSETUP open --type=luks ${mount_part} luks-\$CRYPTSETUP_UUID\""
 		echo "sudo -- bash -c \"mkfs.ext4${mount_label:+ -L $mount_label} /dev/mapper/luks-\$CRYPTSETUP_UUID\""
+		echo "sleep 5 && sync"
+		echo "TMP_MNT=$(mktemp --directory)"
+		echo "sudo mount /dev/mapper/luks-$CRYPTSETUP_UUID ${TMP_MNT}"
+		echo "sudo chown -R ${CRYPTSETUP_USER}:${CRYPTSETUP_GROUP} ${TMP_MNT}"
+		echo "sudo umount ${TMP_MNT}"
+		echo "rmdir ${TMP_MNT}"
 		echo "sudo -- bash -c \"$CRYPTSETUP close luks-\$CRYPTSETUP_UUID\""
 		echo "# run 'pass edit $path' and append"
 		echo "type: $mount_type"
@@ -81,6 +89,11 @@ cmd_mount_cryptsetup_init() {
 		printf '%s' $pass | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_part} luks-$CRYPTSETUP_UUID"
 		sudo -- bash -c "mkfs.ext4${mount_label:+ -L $mount_label} /dev/mapper/luks-$CRYPTSETUP_UUID"
 		sleep 5 && sync
+		TMP_MNT=$(mktemp --directory)
+		sudo mount /dev/mapper/luks-$CRYPTSETUP_UUID ${TMP_MNT}
+		sudo chown -R ${CRYPTSETUP_USER}:${CRYPTSETUP_GROUP} ${TMP_MNT}
+		sudo umount ${TMP_MNT}
+		rmdir ${TMP_MNT}
 		sudo -- bash -c "$CRYPTSETUP close luks-$CRYPTSETUP_UUID"
 		printf '%s\ntype: %s\nuuid: %s\n' $pass $mount_type $CRYPTSETUP_UUID | pass insert --multiline --force $path
 	fi
