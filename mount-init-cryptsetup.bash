@@ -18,7 +18,7 @@
 set -o pipefail
 
 CRYPTSETUP=$(which cryptsetup)
-CRYPTSETUP_PASS_LENGTH=8
+CRYPTSETUP_PASS_LENGTH=25
 CRYPTSETUP_ARGS="--type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 8192 --use-random"
 
 cmd_mount_cryptsetup_init() {
@@ -32,23 +32,32 @@ cmd_mount_cryptsetup_init() {
 	[[ -b $mount_dev ]] || die "Error: Block device $mount_dev not found"
 
 	mapfile sudo_cmd <<-_EOF
-		parted --script $mount_dev print
+		parted --script $mount_dev print || true
 		read -n1 -rsp $'Press any key to continue or Ctrl+C to exit...\n'
 		echo "Processing..."
 		parted --script --align optimal $mount_dev mklabel gpt
 		parted --script --align optimal $mount_dev mkpart primary 0% 100%
+		partprobe $mount_dev
 	_EOF
-	format_cmd="$CRYPTSETUP $CRYPTSETUP_ARGS luksFormat ${mount_dev}1"
-	uuid_cmd="$CRYPTSETUP luksUUID ${mount_dev}1"
+
+	if [[ $mount_dev =~ [[:digit:]]$ ]]; then
+		mount_part="${mount_dev}p1"
+	else
+		mount_part="${mount_dev}1"
+	fi
+
+	format_cmd="$CRYPTSETUP $CRYPTSETUP_ARGS luksFormat ${mount_part}"
+	uuid_cmd="$CRYPTSETUP luksUUID ${mount_part}"
 
 	[[ ! -f "$PREFIX/$path.gpg" ]] || die "Error: $path already exists"
 	if [[ $dry_run -ne 0 ]]; then
 		echo "pass generate $path $CRYPTSETUP_PASS_LENGTH >& /dev/null"
 		echo "sudo -- bash -c \"set -eo pipefail; \\"
 		echo " ${sudo_cmd[@]}\""
+		echo "[[ -b $mount_part ]] || die \"Error: Partition $mount_part not found\""
 		echo "sudo -- bash -c \"$format_cmd\""
 		echo "CRYPTSETUP_UUID=\$(sudo -- bash -c \"$uuid_cmd\")"
-		echo "sudo -- bash -c \"$CRYPTSETUP open --type=luks ${mount_dev}1 luks-\$CRYPTSETUP_UUID\""
+		echo "sudo -- bash -c \"$CRYPTSETUP open --type=luks ${mount_part} luks-\$CRYPTSETUP_UUID\""
 		echo "sudo -- bash -c \"mkfs.ext4${mount_label:+ -L $mount_label} /dev/mapper/luks-\$CRYPTSETUP_UUID\""
 		echo "sudo -- bash -c \"$CRYPTSETUP close luks-\$CRYPTSETUP_UUID\""
 		echo "# run 'pass edit $path' and append"
@@ -59,15 +68,17 @@ cmd_mount_cryptsetup_init() {
 		pass generate $path $CRYPTSETUP_PASS_LENGTH >& /dev/null || exit $?
 		pass="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | head -n 1)" || exit $?
 		sudo -- bash -c "set -eo pipefail; ${sudo_cmd[*]}"
+		[[ -b $mount_part ]] || die "Error: Partition $mount_part not found"
 		printf '%s' $pass | sudo -- bash -c "$format_cmd"
 		CRYPTSETUP_UUID=$(sudo -- bash -c "$uuid_cmd")
 		echo CRYPTSETUP_UUID=$CRYPTSETUP_UUID
-		printf '%s' $pass | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_dev}1 luks-$CRYPTSETUP_UUID"
+		printf '%s' $pass | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_part} luks-$CRYPTSETUP_UUID"
 		sudo -- bash -c "mkfs.ext4${mount_label:+ -L $mount_label} /dev/mapper/luks-$CRYPTSETUP_UUID"
 		sleep 5 && sync
 		sudo -- bash -c "$CRYPTSETUP close luks-$CRYPTSETUP_UUID"
 		printf '%s\ntype: %s\nuuid: %s\n' $pass $mount_type $CRYPTSETUP_UUID | pass insert --multiline --force $path
 	fi
+
 }
 
 cmd_mount_cryptsetup_get_dev() {
