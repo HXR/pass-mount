@@ -39,4 +39,11 @@ tasks:
         echo "Error: logged date doesn't match"
         exit
       fi
-      echo "Duration: $((${TEST_STOP}-${TEST_START}))"
+      TEST_DURATION=$((${TEST_STOP}-${TEST_START}))
+      echo "Duration: ${TEST_DURATION}"
+      if [[ ${TEST_DURATION} -lt 2 ]]; then
+        echo "Error: test duration too short"
+      fi
+      if [[ ${TEST_DURATION} -gt 45 ]]; then
+        echo "Error: test duration too long"
+      fi
