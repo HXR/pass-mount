@@ -17,9 +17,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 set -o pipefail
 
-CRYPTSETUP=$(which cryptsetup)
-CRYPTSETUP_PASS_LENGTH=25
-CRYPTSETUP_ARGS="--type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 8192 --use-random"
+CRYPTSETUP=$(which cryptsetup || die cryptsetup not found)
+CRYPTSETUP_PASS_LENGTH="${CRYPTSETUP_PASS_LENGTH:-25}"
+CRYPTSETUP_ARGS="${CRYPTSETUP_ARGS:---type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 8192 --use-random}"
 
 cmd_mount_cryptsetup_init() {
 	local pass
