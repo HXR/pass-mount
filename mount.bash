@@ -111,7 +111,7 @@ cmd_mount_init() {
   case "$mount_type" in
     udisks|cryptsetup)
       # shellcheck source=mount-init-cryptsetup.bash
-      source "$(dirname ${BASH_SOURCE[0]})/mount-init-cryptsetup.bash"
+      source "$(dirname "${BASH_SOURCE[0]}")/mount-init-cryptsetup.bash"
       cmd_mount_cryptsetup_init "$@"
       ;;
     cryfs)          cmd_mount_cryfs_init ;;
