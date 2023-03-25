@@ -40,19 +40,19 @@ mount_config() {
   mount_password=${contents%%$'\n'*}
   mount_passname="$path"
   while read -r -a line; do
-    if [[ "$line" == type: ]]; then
+    if [[ "${line[0]}" == type: ]]; then
       mount_type="${line[1]}"
     fi
-    if [[ "$line" == uuid: ]]; then
+    if [[ "${line[0]}" == uuid: ]]; then
       mount_uuid="${line[1]}"
     fi
-    if [[ "$line" == basedir: ]]; then
+    if [[ "${line[0]}" == basedir: ]]; then
       mount_basedir="${line[1]}"
       if [[ ! "$mount_basedir" =~ ^/ ]]; then
         mount_basedir="$HOME/$mount_basedir"
       fi
     fi
-    if [[ "$line" == mountpoint: ]]; then
+    if [[ "${line[0]}" == mountpoint: ]]; then
       mount_mountpoint="${line[1]}"
       if [[ ! "$mount_mountpoint" =~ ^/ ]]; then
         mount_mountpoint="$HOME/$mount_mountpoint"
