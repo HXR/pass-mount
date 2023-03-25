@@ -66,7 +66,7 @@ cmd_mount_cryptsetup_init() {
 		echo "sudo -- bash -c \"$format_cmd\""
 		echo "CRYPTSETUP_UUID=\$(sudo -- bash -c \"$uuid_cmd\")"
 		echo "sudo -- bash -c \"$CRYPTSETUP open --type=luks ${mount_part} luks-\$CRYPTSETUP_UUID\""
-		echo "sudo -- bash -c \"mkfs.ext4${mount_label:+ -L $mount_label} /dev/mapper/luks-\$CRYPTSETUP_UUID\""
+		echo "sudo -- bash -c \"mkfs.ext4 -q ${mount_label:+ -L $mount_label} /dev/mapper/luks-\$CRYPTSETUP_UUID\""
 		echo "sleep 5 && sync"
 		echo "TMP_MNT=$(mktemp --directory)"
 		echo "sudo mount /dev/mapper/luks-$CRYPTSETUP_UUID ${TMP_MNT}"
@@ -87,7 +87,7 @@ cmd_mount_cryptsetup_init() {
 		CRYPTSETUP_UUID=$(sudo -- bash -c "$uuid_cmd")
 		echo CRYPTSETUP_UUID=$CRYPTSETUP_UUID
 		printf '%s' $pass | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_part} luks-$CRYPTSETUP_UUID"
-		sudo -- bash -c "mkfs.ext4${mount_label:+ -L $mount_label} /dev/mapper/luks-$CRYPTSETUP_UUID"
+		sudo -- bash -c "mkfs.ext4 -q ${mount_label:+ -L $mount_label} /dev/mapper/luks-$CRYPTSETUP_UUID"
 		sleep 5 && sync
 		TMP_MNT=$(mktemp --directory)
 		sudo mount /dev/mapper/luks-$CRYPTSETUP_UUID ${TMP_MNT}
