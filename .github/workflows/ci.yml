@@ -1,0 +1,16 @@
+name: pass-mount CI
+run-name: ${{ github.actor }} building ${{ github.ref }}
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Run shellcheck, etc
+        run: make lint
