@@ -72,8 +72,8 @@ cmd_umount_cryfs_target() {
 
 cmd_umount_udisks_target() {
   [[ -e "/dev/mapper/luks-$mount_uuid" ]] || die "mountpoint:$path already unmounted"
-  udisksctl unmount --block-device /dev/mapper/luks-$mount_uuid
-  udisksctl lock --block-device /dev/disk/by-uuid/$mount_uuid
+  udisksctl unmount --block-device "/dev/mapper/luks-$mount_uuid"
+  udisksctl lock --block-device "/dev/disk/by-uuid/$mount_uuid"
 }
 
 cmd_umount_cryptsetup_target() {
