@@ -110,6 +110,7 @@ cmd_mount_init() {
   fi
   case "$mount_type" in
     udisks|cryptsetup)
+      # shellcheck source=mount-init-cryptsetup.bash
       source "$(dirname ${BASH_SOURCE[0]})/mount-init-cryptsetup.bash"
       cmd_mount_cryptsetup_init "$@"
       ;;
@@ -213,8 +214,8 @@ cmd_mount_cryfs_target() {
 }
 
 cmd_mount_udisks_target() {
-  udisksctl unlock --block-device /dev/disk/by-uuid/$mount_uuid --key-file <(printf '%s' $mount_password)
-  udisksctl mount --block-device /dev/mapper/luks-$mount_uuid
+  udisksctl unlock --block-device "/dev/disk/by-uuid/$mount_uuid" --key-file <(printf '%s' "$mount_password")
+  udisksctl mount --block-device "/dev/mapper/luks-$mount_uuid"
 }
 
 cmd_mount_cryptsetup_target() {
@@ -240,7 +241,7 @@ _EOF
       die "$mount_passname [$mount_uuid] is mounted at $mount_mountpoint"
     fi
   fi
-  printf '%s' $mount_password | sudo -- bash -c "${sudo_cmd[*]}"
+  printf '%s' "$mount_password" | sudo -- bash -c "${sudo_cmd[*]}"
 }
 
 cmd_mount_status() {
