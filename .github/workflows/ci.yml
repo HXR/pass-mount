@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
+      - name: Install Deps
+        run: sudo apt-get install --assume-yes udisks2
       - name: Run shellcheck, etc
         run: make lint
       - name: Install
