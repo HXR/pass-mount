@@ -14,3 +14,16 @@ jobs:
         uses: actions/checkout@v3
       - name: Run shellcheck, etc
         run: make lint
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install
+        run: sudo make install
+      - name: Update polkit policy for lookback access
+        run: sudo cp .builds/udisks.pkla /var/lib/polkit-1/localauthority/50-local.d/.
+      - name: Restart udisks
+        run: sudo systemctl restart udisks2
+      - name: Create loopback image
+        run: dd if=/dev/zero of=~/test.img bs=1024k count=8
+      - name: Setup loopback device
+        run: udisksctl loop-setup --file ~/test.img

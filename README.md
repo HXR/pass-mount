@@ -1,6 +1,7 @@
 # pass-mount
 
 [![builds.sr.ht status](https://builds.sr.ht/~lucidone/pass-mount.svg)](https://builds.sr.ht/~lucidone/pass-mount?)
+[![pass-mount CI](https://github.com/HXR/pass-mount/actions/workflows/ci.yml/badge.svg)](https://github.com/HXR/pass-mount/actions/workflows/ci.yml)
 
 -----
 
