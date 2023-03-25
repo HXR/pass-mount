@@ -7,18 +7,13 @@ on:
       - main
   pull_request:
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
       - name: Run shellcheck, etc
         run: make lint
-  test:
-    if: ${{ always() }}
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
       - name: Install
         run: sudo make install
       - name: Update polkit policy for lookback access
