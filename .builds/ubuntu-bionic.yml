@@ -10,6 +10,7 @@ tasks:
       export LC_ALL=C.UTF-8
       export LANG=C.UTF-8
       cd pass-mount
+      make lint
       sudo make install
       sudo cp .builds/udisks.pkla /var/lib/polkit-1/localauthority/50-local.d/.
       sudo systemctl restart udisks2
