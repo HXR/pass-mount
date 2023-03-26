@@ -91,6 +91,9 @@ cmd_mount_cryptsetup_init() {
 		printf '%s' "$pass" | sudo -- bash -c "$format_cmd"
 		echo "$uuid_cmd"
 		sudo -- bash -c "$uuid_cmd"
+		echo "----"
+		/usr/sbin/cryptsetup luksUUID
+		echo "----"
 		CRYPTSETUP_UUID=$(sudo -- bash -c "$uuid_cmd")
 		echo "CRYPTSETUP_UUID=$CRYPTSETUP_UUID"
 		printf '%s' "$pass" | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_part} luks-$CRYPTSETUP_UUID"
