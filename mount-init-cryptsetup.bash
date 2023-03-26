@@ -88,12 +88,7 @@ cmd_mount_cryptsetup_init() {
 		pass="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | head -n 1)" || exit $?
 		sudo -- bash -c "set -e; ${sudo_cmd[*]}"
 		[[ -b $mount_part ]] || die "Error: Partition $mount_part not found"
-		echo "----"
 		printf '%s' "$pass" | sudo -- bash -c "$format_cmd"
-		echo "$format_cmd"
-		echo "----"
-		/usr/sbin/cryptsetup luksUUID
-		echo "----"
 		CRYPTSETUP_UUID=$(sudo -- bash -c "$uuid_cmd")
 		echo "CRYPTSETUP_UUID=$CRYPTSETUP_UUID"
 		printf '%s' "$pass" | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_part} luks-$CRYPTSETUP_UUID"
