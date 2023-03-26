@@ -88,6 +88,7 @@ cmd_mount_cryptsetup_init() {
 		pass="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | head -n 1)" || exit $?
 		sudo -- bash -c "set -e; ${sudo_cmd[*]}"
 		[[ -b $mount_part ]] || die "Error: Partition $mount_part not found"
+		echo "----"
 		printf '%s' "$pass" | sudo -- bash -c "$format_cmd"
 		echo "$format_cmd"
 		echo "----"

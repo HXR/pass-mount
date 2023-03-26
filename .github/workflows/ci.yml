@@ -22,7 +22,7 @@ jobs:
           sudo systemctl restart udisks2 polkit
       - name: Setup loopback device
         run: |
-          dd if=/dev/zero of=~/test.img bs=1024k count=8
+          dd if=/dev/zero of=~/test.img bs=1024k count=16
           export LOOP_DEV=$(udisksctl loop-setup --file ~/test.img | sed 's/^.* as \/dev\/\(.*\).$/\1/')
           gpg2 --batch --no-tty --yes --passphrase '' --quick-generate-key ci@test rsa1024 encrypt 1y
           pass init ci@test
