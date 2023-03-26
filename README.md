@@ -1,7 +1,7 @@
 # pass-mount
 
-[![builds.sr.ht status](https://builds.sr.ht/~lucidone/pass-mount.svg)](https://builds.sr.ht/~lucidone/pass-mount?)
-[![pass-mount CI](https://github.com/HXR/pass-mount/actions/workflows/ci.yml/badge.svg)](https://github.com/HXR/pass-mount/actions/workflows/ci.yml)
+[![builds.sr.ht status](https://builds.sr.ht/~lucidone/pass-mount.svg)](https://builds.sr.ht/~lucidone/pass-mount?)  
+[![pass-mount CI](https://github.com/HXR/pass-mount/actions/workflows/ci.yml/badge.svg)](https://github.com/HXR/pass-mount/actions/workflows/ci.yml)  
 
 -----
 
@@ -54,6 +54,7 @@ More information may be found in the pass-mount(1) man page.
 Under "active" development  
 Configuration format unstable and upgrade may require manual edits  
 Cryfs is unstable - backup your data  
+**DEPRECATED**: Cryfs support is deprecated
 
 #### 0.0.1 -> 0.1.0 Breaking changes
 Cryfs based mountpoints now require `type: cryfs` in the [configuration](#example-config)
