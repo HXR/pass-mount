@@ -1,0 +1,21 @@
+default:
+  tags:
+    - docker
+
+image: alpine:latest
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - deploy
+
+deploy-job:
+  stage: deploy
+  environment: production
+  script:
+    - '[[ -z "$CI_KEY" ]] || echo ${#CI_KEY}'
+    - apk add gnupg
+    - cat $CI_KEY | gpg --batch --import
+    - echo $CI_PASS | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
+    - gpg --fingerprint
