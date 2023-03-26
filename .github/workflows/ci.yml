@@ -32,19 +32,19 @@ jobs:
         run: |
           export TEST_START=$(date +%s)
           pass mount data/loop
-          ls -la /media/build/loop
-          echo "TEST_CHECK=${TEST_START}" > /media/build/loop/date.log
+          ls -la /media/$USER/loop
+          echo "TEST_CHECK=${TEST_START}" > /media/$USER/loop/date.log
           pass umount data/loop
-          if [[ -f /media/build/loop/date.log ]]; then
+          if [[ -f /media/$USER/loop/date.log ]]; then
             echo "Error: umount failed"
             exit
           fi
           pass mount data/loop
-          if [[ ! -f /media/build/loop/date.log ]]; then
+          if [[ ! -f /media/$USER/loop/date.log ]]; then
             echo "Error: mount failed"
             exit
           fi
-          source /media/build/loop/date.log
+          source /media/$USER/loop/date.log
           export TEST_STOP=$(date +%s)
           if [[ ! "${TEST_START}" -eq "${TEST_CHECK}" ]]; then
             echo "Error: logged date doesn't match"

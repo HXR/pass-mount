@@ -100,7 +100,7 @@ cmd_mount_cryptsetup_init() {
 		sudo umount "${TMP_MNT}"
 		rmdir "${TMP_MNT}"
 		sudo -- bash -c "$CRYPTSETUP close luks-$CRYPTSETUP_UUID"
-		printf '%s\ntype: %s\nuuid: %s\n' "$pass" "$mount_type" "$CRYPTSETUP_UUID" | pass insert --multiline --force "$path"
+		printf '%s\ntype: %s\nuuid: %s\n' "$pass" "$mount_type" "$CRYPTSETUP_UUID" | pass insert --multiline --force "$path" >& /dev/null
 	fi
 }
 
