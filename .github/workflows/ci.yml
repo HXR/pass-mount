@@ -15,7 +15,9 @@ jobs:
       - name: Install Deps
         run: sudo apt-get install --assume-yes udisks2
       - name: Debug
-        run: whoami
+        run: whoami && groups
+      - name: Update user
+        run: usermod -a -G plugdev runner
       - name: Run shellcheck, etc
         run: make lint
       - name: Install
