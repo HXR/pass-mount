@@ -69,7 +69,7 @@ cmd_mount_cryptsetup_init() {
 		echo "\""
 		echo "[[ -b $mount_part ]] || die \"Error: Partition $mount_part not found\""
 		echo "sudo -- bash -c \"$format_cmd\""
-		echo "CRYPTSETUP_UUID=\$(echo sudo -- bash -c \"$uuid_cmd\")"
+		echo "CRYPTSETUP_UUID=\$(sudo -- bash -c \"$uuid_cmd\")"
 		echo "sudo -- bash -c \"$CRYPTSETUP open --type=luks ${mount_part} luks-\$CRYPTSETUP_UUID\""
 		echo "sudo -- bash -c \"mkfs.ext4 -q ${mount_label:+ -L $mount_label} /dev/mapper/luks-\$CRYPTSETUP_UUID\""
 		echo "sleep 5 && sync"
@@ -89,6 +89,8 @@ cmd_mount_cryptsetup_init() {
 		sudo -- bash -c "set -e; ${sudo_cmd[*]}"
 		[[ -b $mount_part ]] || die "Error: Partition $mount_part not found"
 		printf '%s' "$pass" | sudo -- bash -c "$format_cmd"
+		echo "$uuid_cmd"
+		sudo -- bash -c "$uuid_cmd"
 		CRYPTSETUP_UUID=$(sudo -- bash -c "$uuid_cmd")
 		echo "CRYPTSETUP_UUID=$CRYPTSETUP_UUID"
 		printf '%s' "$pass" | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_part} luks-$CRYPTSETUP_UUID"
