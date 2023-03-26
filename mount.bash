@@ -40,19 +40,19 @@ mount_config() {
   mount_password=${contents%%$'\n'*}
   mount_passname="$path"
   while read -r -a line; do
-    if [[ "$line" == type: ]]; then
+    if [[ "${line[0]}" == type: ]]; then
       mount_type="${line[1]}"
     fi
-    if [[ "$line" == uuid: ]]; then
+    if [[ "${line[0]}" == uuid: ]]; then
       mount_uuid="${line[1]}"
     fi
-    if [[ "$line" == basedir: ]]; then
+    if [[ "${line[0]}" == basedir: ]]; then
       mount_basedir="${line[1]}"
       if [[ ! "$mount_basedir" =~ ^/ ]]; then
         mount_basedir="$HOME/$mount_basedir"
       fi
     fi
-    if [[ "$line" == mountpoint: ]]; then
+    if [[ "${line[0]}" == mountpoint: ]]; then
       mount_mountpoint="${line[1]}"
       if [[ ! "$mount_mountpoint" =~ ^/ ]]; then
         mount_mountpoint="$HOME/$mount_mountpoint"
@@ -110,7 +110,8 @@ cmd_mount_init() {
   fi
   case "$mount_type" in
     udisks|cryptsetup)
-      source "$(dirname ${BASH_SOURCE[0]})/mount-init-cryptsetup.bash"
+      # shellcheck source=mount-init-cryptsetup.bash
+      source "$(dirname "${BASH_SOURCE[0]}")/mount-init-cryptsetup.bash"
       cmd_mount_cryptsetup_init "$@"
       ;;
     cryfs)          cmd_mount_cryfs_init ;;
@@ -213,8 +214,8 @@ cmd_mount_cryfs_target() {
 }
 
 cmd_mount_udisks_target() {
-  udisksctl unlock --block-device /dev/disk/by-uuid/$mount_uuid --key-file <(printf '%s' $mount_password)
-  udisksctl mount --block-device /dev/mapper/luks-$mount_uuid
+  udisksctl unlock --block-device "/dev/disk/by-uuid/$mount_uuid" --key-file <(printf '%s' "$mount_password")
+  udisksctl mount --block-device "/dev/mapper/luks-$mount_uuid"
 }
 
 cmd_mount_cryptsetup_target() {
@@ -240,7 +241,7 @@ _EOF
       die "$mount_passname [$mount_uuid] is mounted at $mount_mountpoint"
     fi
   fi
-  printf '%s' $mount_password | sudo -- bash -c "${sudo_cmd[*]}"
+  printf '%s' "$mount_password" | sudo -- bash -c "${sudo_cmd[*]}"
 }
 
 cmd_mount_status() {

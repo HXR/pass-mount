@@ -1,0 +1,61 @@
+name: pass-mount CI
+run-name: ${{ github.actor }} building ${{ github.ref }}
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Lint
+        run: make lint
+      - name: Setup
+        run: |
+          sudo apt-get install --assume-yes udisks2
+          sudo make install
+          sudo cp .github/udisks.pkla /var/lib/polkit-1/localauthority/50-local.d/.
+          sudo systemctl restart udisks2 polkit
+      - name: Setup loopback device
+        run: |
+          dd if=/dev/zero of=~/test.img bs=1024k count=32
+          export LOOP_DEV=$(udisksctl loop-setup --file ~/test.img | sed 's/^.* as \/dev\/\(.*\).$/\1/')
+          gpg2 --batch --no-tty --yes --passphrase '' --quick-generate-key ci@test rsa1024 encrypt 1y
+          pass init ci@test
+          export CRYPTSETUP_ARGS="--type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 8192 --use-urandom"
+          pass mount init --type udisks -d /dev/${LOOP_DEV} --label loop data/loop < /dev/null
+      - name: Test loopback
+        run: |
+          export TEST_START=$(date +%s)
+          pass mount data/loop
+          ls -la /media/$USER/loop
+          echo "TEST_CHECK=${TEST_START}" > /media/$USER/loop/date.log
+          pass umount data/loop
+          if [[ -f /media/$USER/loop/date.log ]]; then
+            echo "Error: umount failed"
+            exit
+          fi
+          pass mount data/loop
+          if [[ ! -f /media/$USER/loop/date.log ]]; then
+            echo "Error: mount failed"
+            exit
+          fi
+          source /media/$USER/loop/date.log
+          export TEST_STOP=$(date +%s)
+          if [[ ! "${TEST_START}" -eq "${TEST_CHECK}" ]]; then
+            echo "Error: logged date doesn't match"
+            exit
+          fi
+          TEST_DURATION=$((${TEST_STOP}-${TEST_START}))
+          echo "Duration: ${TEST_DURATION}"
+          if [[ ${TEST_DURATION} -lt 2 ]]; then
+            echo "Error: test duration too short"
+          fi
+          if [[ ${TEST_DURATION} -gt 45 ]]; then
+            echo "Error: test duration too long"
+          fi
+          ls -la /media/$USER/loop

@@ -27,7 +27,7 @@ uninstall:
 		"$(DESTDIR)$(MANDIR)/man1/pass-$(PROG).1"
 
 lint:
-	shellcheck -s bash *.bash
+	shellcheck --color=always -s bash *.bash
 
 doc: pass-$(PROG).1
 

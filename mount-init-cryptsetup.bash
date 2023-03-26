@@ -25,7 +25,11 @@ CRYPTSETUP_GROUP="${CRYPTSETUP_GROUP:-$(id -gn)}"
 
 cmd_mount_cryptsetup_init() {
 	local pass
+	local path="${path:?}"
 	local passfile="$PREFIX/$path.gpg"
+	local mount_type="${mount_type:-cryptsetup}"
+	local mount_label="${mount_label:-unknown}"
+	local dry_run="${dry_run:-0}"
 	check_sneaky_paths "$path"
 
 	if [[ ! $mount_dev ]]; then
@@ -61,7 +65,8 @@ cmd_mount_cryptsetup_init() {
 	if [[ $dry_run -ne 0 ]]; then
 		echo "pass generate $path $CRYPTSETUP_PASS_LENGTH >& /dev/null"
 		echo "sudo -- bash -c \"set -eo pipefail; \\"
-		echo " ${sudo_cmd[@]}\""
+		echo "${sudo_cmd[@]}"
+		echo "\""
 		echo "[[ -b $mount_part ]] || die \"Error: Partition $mount_part not found\""
 		echo "sudo -- bash -c \"$format_cmd\""
 		echo "CRYPTSETUP_UUID=\$(sudo -- bash -c \"$uuid_cmd\")"
@@ -79,25 +84,24 @@ cmd_mount_cryptsetup_init() {
 		echo "uuid: \$CRYPTSETUP_UUID"
 		exit
 	else
-		pass generate $path $CRYPTSETUP_PASS_LENGTH >& /dev/null || exit $?
+		pass generate "$path" "$CRYPTSETUP_PASS_LENGTH" >& /dev/null || exit $?
 		pass="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | head -n 1)" || exit $?
 		sudo -- bash -c "set -e; ${sudo_cmd[*]}"
 		[[ -b $mount_part ]] || die "Error: Partition $mount_part not found"
-		printf '%s' $pass | sudo -- bash -c "$format_cmd"
+		printf '%s' "$pass" | sudo -- bash -c "$format_cmd"
 		CRYPTSETUP_UUID=$(sudo -- bash -c "$uuid_cmd")
-		echo CRYPTSETUP_UUID=$CRYPTSETUP_UUID
-		printf '%s' $pass | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_part} luks-$CRYPTSETUP_UUID"
+		echo "CRYPTSETUP_UUID=$CRYPTSETUP_UUID"
+		printf '%s' "$pass" | sudo -- bash -c "$CRYPTSETUP open --type=luks ${mount_part} luks-$CRYPTSETUP_UUID"
 		sudo -- bash -c "mkfs.ext4 -q ${mount_label:+ -L $mount_label} /dev/mapper/luks-$CRYPTSETUP_UUID"
 		sleep 5 && sync
 		TMP_MNT=$(mktemp --directory)
-		sudo mount /dev/mapper/luks-$CRYPTSETUP_UUID ${TMP_MNT}
-		sudo chown -R ${CRYPTSETUP_USER}:${CRYPTSETUP_GROUP} ${TMP_MNT}
-		sudo umount ${TMP_MNT}
-		rmdir ${TMP_MNT}
+		sudo mount "/dev/mapper/luks-$CRYPTSETUP_UUID" "${TMP_MNT}"
+		sudo chown -R "${CRYPTSETUP_USER}:${CRYPTSETUP_GROUP}" "${TMP_MNT}"
+		sudo umount "${TMP_MNT}"
+		rmdir "${TMP_MNT}"
 		sudo -- bash -c "$CRYPTSETUP close luks-$CRYPTSETUP_UUID"
-		printf '%s\ntype: %s\nuuid: %s\n' $pass $mount_type $CRYPTSETUP_UUID | pass insert --multiline --force $path
+		printf '%s\ntype: %s\nuuid: %s\n' "$pass" "$mount_type" "$CRYPTSETUP_UUID" | pass insert --multiline --force "$path" >& /dev/null
 	fi
-
 }
 
 cmd_mount_cryptsetup_get_dev() {
@@ -105,7 +109,7 @@ cmd_mount_cryptsetup_get_dev() {
 	[[ -d /sys/block ]] || die "Error: Unable to locate block devices in sysfs"
 
 	BOOT_PART=$(findmnt --noheadings --target /boot --output SOURCE)
-	[[ -b "$BOOT_PART" ]] && BOOT_DEV="$(lsblk --noheadings --output PKNAME ${BOOT_PART})"
+	[[ -b "$BOOT_PART" ]] && BOOT_DEV="$(lsblk --noheadings --output PKNAME "${BOOT_PART}")"
 
 	echo "Device        Type    Info"
 	for device in /sys/block/* ; do
@@ -113,21 +117,21 @@ cmd_mount_cryptsetup_get_dev() {
 		[[ "$device" != dm-* ]] || continue
 		[[ "$device" != loop* ]] || continue
 		[[ "$device" != md* ]] || continue
-		[[ "$device" != ${BOOT_DEV:-sda} ]] || continue
-		read device_vendor < "/sys/block/$device/device/vendor"
-		read device_model < "/sys/block/$device/device/model"
+		[[ "$device" != "${BOOT_DEV:-sda}" ]] || continue
+		read -r device_vendor < "/sys/block/$device/device/vendor"
+		read -r device_model < "/sys/block/$device/device/model"
 		device_bus=$(udevadm info "/dev/$device" | grep ID_BUS | cut -d= -f2)
 		printf '%-14s%-8s%s\n' \
 			"/dev/$device" "${device_bus:-unknown}" "$device_vendor $device_model"
 	done
 
 	echo
-	while [[ ! $mount_dev || ! -b $mount_dev ]]; do
-		if [ $mount_dev ]; then
-			echo Block device $mount_dev not found
+	while [[ ! "$mount_dev" || ! -b "$mount_dev" ]]; do
+		if [ "$mount_dev" ]; then
+			echo "Block device $mount_dev not found"
 		fi
 		read -r -p "Device: " -e mount_dev
-		if [ ! $mount_dev ]; then
+		if [ ! "$mount_dev" ]; then
 			exit 1
 		fi
 	done

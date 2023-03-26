@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## NEWS
+## [0.2.2] - 2023-03-25
+### Changed
+- **DEPRECATED**: Cryfs support is deprecated
+
 ## [0.2.1] - 2020-07-30
 ### Added
 - Support for initializing loopback devices

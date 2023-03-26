@@ -27,13 +27,13 @@ umount_config() {
 
   contents=$($GPG -d "${GPG_OPTS[@]}" "$passfile")
   while read -r -a line; do
-    if [[ "$line" == type: ]]; then
+    if [[ "${line[0]}" == type: ]]; then
       mount_type="${line[1]}"
     fi
-    if [[ "$line" == uuid: ]]; then
+    if [[ "${line[0]}" == uuid: ]]; then
       mount_uuid="${line[1]}"
     fi
-    if [[ "$line" == mountpoint: ]]; then
+    if [[ "${line[0]}" == mountpoint: ]]; then
       mount_mountpoint="${line[1]}"
       if [[ ! "$mount_mountpoint" =~ ^/ ]]; then
         mount_mountpoint="$HOME/$mount_mountpoint"
@@ -72,8 +72,8 @@ cmd_umount_cryfs_target() {
 
 cmd_umount_udisks_target() {
   [[ -e "/dev/mapper/luks-$mount_uuid" ]] || die "mountpoint:$path already unmounted"
-  udisksctl unmount --block-device /dev/mapper/luks-$mount_uuid
-  udisksctl lock --block-device /dev/disk/by-uuid/$mount_uuid
+  udisksctl unmount --block-device "/dev/mapper/luks-$mount_uuid"
+  udisksctl lock --block-device "/dev/disk/by-uuid/$mount_uuid"
 }
 
 cmd_umount_cryptsetup_target() {
