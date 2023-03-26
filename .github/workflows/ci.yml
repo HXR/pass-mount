@@ -58,4 +58,4 @@ jobs:
           if [[ ${TEST_DURATION} -gt 45 ]]; then
             echo "Error: test duration too long"
           fi
-          ls -la /media/build/loop
+          ls -la /media/$USER/loop
