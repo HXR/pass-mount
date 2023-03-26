@@ -3,6 +3,7 @@ packages:
   - udisks2
   - pass
   - cryptsetup-bin
+  - shellcheck
 sources:
   - https://git.sr.ht/~lucidone/pass-mount
 tasks:
