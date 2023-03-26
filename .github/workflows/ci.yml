@@ -14,16 +14,12 @@ jobs:
         uses: actions/checkout@v3
       - name: Install Deps
         run: sudo apt-get install --assume-yes udisks2
-      - name: Debug
-        run: whoami && groups
-      - name: Update user
-        run: sudo usermod -a -G plugdev runner
       - name: Run shellcheck, etc
         run: make lint
       - name: Install
         run: sudo make install
       - name: Update polkit policy for lookback access
-        run: sudo cp .builds/udisks.pkla /var/lib/polkit-1/localauthority/50-local.d/.
+        run: sudo cp .github/udisks.pkla /var/lib/polkit-1/localauthority/50-local.d/.
       - name: Restart udisks
         run: sudo systemctl restart udisks2 polkit
       - name: Create loopback image
