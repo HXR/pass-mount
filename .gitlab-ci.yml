@@ -19,3 +19,4 @@ deploy-job:
     - cat $CI_KEY | gpg --batch --import
     - echo $CI_PASS | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
     - gpg --fingerprint
+    - ls
