@@ -2,7 +2,7 @@ default:
   tags:
     - docker
 
-image: alpine:latest
+image: ubuntu:jammy
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -14,9 +14,16 @@ deploy-job:
   stage: deploy
   environment: production
   script:
-    - '[[ -z "$CI_KEY" ]] || echo ${#CI_KEY}'
-    - apk add gnupg
+    - '[[ ! -z "$CI_KEY" ]] || (echo "Warning: \$CI_KEY not set" && exit 1)'
+    - apt-get update
+    - apt-get install --no-install-recommends --assume-yes gnupg git devscripts
     - cat $CI_KEY | gpg --batch --import
     - echo $CI_PASS | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
     - gpg --fingerprint
-    - ls
+    - ls -la
+    - git status
+    - git config --global user.email "code@hxr.io"
+    - git config --global user.name "HXR CI"
+    - git merge --allow-unrelated-histories origin/main
+    - ls -la
+    - debuild -i -S
