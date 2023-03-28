@@ -48,10 +48,10 @@ deploy-job:
     - echo $CI_PASS | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
     - git config --global user.email "code@hxr.io"
     - git config --global user.name "HXR CI"
-#    - git fetch
+    - git fetch origin main
     - git merge -srecursive -Xours --allow-unrelated-histories origin/main
     - ls -la
-    - PKG_VERSION="$(cat ./VERSION)-ci.${CI_COMMIT_SHORT_SHA}"
+    - PKG_VERSION="$(cat ./VERSION)-$(date +%Y%m%d%H%M)-ci.${CI_COMMIT_SHORT_SHA}"
     - dch --distribution jammy --newversion $PKG_VERSION automated CI
     - debuild --no-tgz-check -i -S
     - dput ppa:hxr-io/aesthetic-testing ../pass-mount_${PKG_VERSION}_source.changes
