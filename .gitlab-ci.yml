@@ -6,9 +6,21 @@ image: ubuntu:jammy
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  DEBEMAIL: code@hxr.io
+  DEBFULLNAME: HXR CI
 
 stages:
+  - test
   - deploy
+
+lint-job:
+  stage: test
+  script:
+    - apt-get update
+    - apt-get install --no-install-recommends --assume-yes shellcheck build-essential
+    - make lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 
 deploy-job:
   stage: deploy
@@ -16,14 +28,17 @@ deploy-job:
   script:
     - '[[ ! -z "$CI_KEY" ]] || (echo "Warning: \$CI_KEY not set" && exit 1)'
     - apt-get update
-    - apt-get install --no-install-recommends --assume-yes gnupg git devscripts
+    - apt-get install --no-install-recommends --assume-yes gnupg git devscripts build-essential debhelper dput
     - cat $CI_KEY | gpg --batch --import
     - echo $CI_PASS | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
-    - gpg --fingerprint
-    - ls -la
-    - git status
     - git config --global user.email "code@hxr.io"
     - git config --global user.name "HXR CI"
-    - git merge --allow-unrelated-histories origin/main
+#    - git fetch
+    - git merge -srecursive -Xours --allow-unrelated-histories origin/main
     - ls -la
-    - debuild -i -S
+    - PKG_VERSION=$(date +0.1.0-ci.%Y%m%d%H%M)
+    - dch --distribution jammy --newversion $PKG_VERSION automated CI
+    - debuild --no-tgz-check -i -S
+    - dput ppa:hxr-io/aesthetic-testing ../pass-mount_${PKG_VERSION}_source.changes
+  rules:
+    - if: $CI_COMMIT_BRANCH == "debian/latest"
