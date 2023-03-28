@@ -22,6 +22,21 @@ lint-job:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 
+release-job:
+  stage: deploy
+  script:
+    - ls -la
+  release:
+    name: 'Release $CI_COMMIT_TAG'
+    description: 'Built by automation'
+    tag_name: '$CI_COMMIT_TAG'
+#    assets:
+#      links:
+#        - name: 'Linux executable'
+#          url: ''
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+
 deploy-job:
   stage: deploy
   environment: production
@@ -36,7 +51,7 @@ deploy-job:
 #    - git fetch
     - git merge -srecursive -Xours --allow-unrelated-histories origin/main
     - ls -la
-    - PKG_VERSION=$(date +0.1.0-ci.%Y%m%d%H%M)
+    - PKG_VERSION="$(cat ./VERSION)-ci.${CI_COMMIT_SHORT_SHA}"
     - dch --distribution jammy --newversion $PKG_VERSION automated CI
     - debuild --no-tgz-check -i -S
     - dput ppa:hxr-io/aesthetic-testing ../pass-mount_${PKG_VERSION}_source.changes
