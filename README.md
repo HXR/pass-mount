@@ -42,6 +42,9 @@ More information may be found in the pass-mount(1) man page.
 ```
 
 ## NEWS
+0.2.2
+  Initial packaging
+  Deprecated cryfs
 0.2.1
   Initial loopback support  
   Initial test infrastrusture  
@@ -55,9 +58,6 @@ Under "active" development
 Configuration format unstable and upgrade may require manual edits  
 Cryfs is unstable - backup your data  
 **DEPRECATED**: Cryfs support is deprecated
-
-#### 0.0.1 -> 0.1.0 Breaking changes
-Cryfs based mountpoints now require `type: cryfs` in the [configuration](#example-config)
 
 #### Cryfs
 - Some versions of cryfs block if /dev/random runs out of entropy
@@ -102,7 +102,7 @@ type: udisks
 uuid: 222254e3-c547-4b4e-823a-5181698e0a39
 ```
 
-For operating systems such as Ubuntu where hot-plugging an encrypted volume will cause udisks to generate a password dialog, one of the following udev rules can be used to disable automatic mounting via udisks.
+For operating systems such as Ubuntu where hot-plugging an encrypted volume will cause udisks to generate a GUI password dialog, one of the following udev rules can be used to disable automatic mounting via udisks.
 ```
 70-udisks-ignore-luks.rules
 70-udisks-ignore-uuid.rules
@@ -124,7 +124,7 @@ uuid: 222254e3-c547-4b4e-823a-5181698e0a39
 ```
 
 ## Under development
-Initial work for initialization of full-disk encryption in progrss
+Initial work for initialization of full-disk encryption in progress
 THIS WILL PROBABLY DESTROY YOUR SYSTEM
 `pass mount init --type udisks -d /dev/sdb --label ORIGIN --dry-run disk/test`
 

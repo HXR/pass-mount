@@ -7,9 +7,9 @@ A Password Store extension for managing encrypted filesystems.
 --------------------------------------------------------------
  
 :Author: Lucid One <LucidOne@users.noreply.github.com>
-:Date:   2018-03-06
+:Date:   2023-03-27
 :Copyright: GPLv3
-:Version: 0.1.1
+:Version: 0.2.1
 :Manual section: 1
 :Manual group: Password Store Extension
  
