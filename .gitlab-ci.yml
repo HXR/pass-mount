@@ -30,6 +30,10 @@ release-job:
     - apt-get install --no-install-recommends --assume-yes curl ca-certificates
     - date +%Y%m%d%H%M > file.txt
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./file.txt "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/pass-mount/$CI_COMMIT_TAG/file.txt"'
+  release:
+    name: 'Release $CI_COMMIT_TAG'
+    description: 'Built by automation'
+    tag_name: '$CI_COMMIT_TAG'
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
 
@@ -53,3 +57,23 @@ deploy-job:
     - dput ppa:hxr-io/aesthetic-testing ../pass-mount_${PKG_VERSION}_source.changes
   rules:
     - if: $CI_COMMIT_BRANCH == "debian/latest"
+
+debuild-job:
+  stage: deploy
+  environment: production
+  script:
+    - '[[ ! -z "$CI_KEY" ]] || (echo "Warning: \$CI_KEY not set" && exit 1)'
+    - apt-get update
+    - apt-get install --no-install-recommends --assume-yes gnupg git devscripts build-essential debhelper dput libdistro-info-perl
+    - cat $CI_KEY | gpg --batch --import
+    - echo $CI_PASS | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
+    - git config --global user.email "code@hxr.io"
+    - git config --global user.name "HXR CI"
+    - "PKG_VERSION=$(basename $CI_COMMIT_TAG | sed 's/^v//')"
+    - git fetch origin v$PKG_VERSION
+    - git merge --no-commit -srecursive -Xours --allow-unrelated-histories v$PKG_VERSION
+    - dch --distribution jammy --newversion $PKG_VERSION automated CI
+    - debuild --no-tgz-check -i -S
+    - dput ppa:hxr-io/aesthetic ../pass-mount_${PKG_VERSION}_source.changes
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^ubuntu\//
